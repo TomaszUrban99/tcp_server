@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include "content_type.h"
+#include "socket_tool.h"
 
 #define IP_LENGTH 50
 #define PORT_NUMBER "8080"
@@ -23,6 +24,16 @@ int main(int argc, char *argv[])
 
     printf("%s", content_type);
     printf("\n");
+
+    int socket_listen = 0;
+    socket_listen = create_socket("127.0.0.1", PORT_NUMBER);
+
+    if (socket_listen < 1)
+        printf("Kaczafi\n");
+    else
+    {
+        printf("Tusk\n");
+    };
 
     return 0;
 }
