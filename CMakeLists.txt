@@ -14,8 +14,12 @@ set(HEADER_FILES_SOCKET inc/socket_tool.h)
 add_library(socket_tool src/socket_tool.c ${HEADER_FILES_SOCKET})
 target_include_directories(socket_tool PRIVATE inc/)
 
-set(HEADER_FILES ${HEADER_FILES_CONT} ${HEADER_FILES_SOCKET} ${HEADER_FILES_CLIENT})
+set(HEADER_FILES_HTTP inc/http_request.h)
+add_library(http_request src/http_request.c ${HEADER_FILES_HTTP})
+target_include_directories(http_request PRIVATE inc/)
+
+set(HEADER_FILES ${HEADER_FILES_CONT} ${HEADER_FILES_SOCKET} ${HEADER_FILES_CLIENT} ${HEADER_FILES_HTTP})
 
 add_executable(ServerProject src/main.c ${HEADER_FILES})
 target_include_directories(ServerProject PRIVATE inc/)
-target_link_libraries(ServerProject content_type socket_tool client)
+target_link_libraries(ServerProject content_type socket_tool client http_request)

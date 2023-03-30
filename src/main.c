@@ -15,6 +15,7 @@
 #include "content_type.h"
 #include "socket_tool.h"
 #include "client_tool.h"
+#include "http_request.h"
 
 #define IP_LENGTH 50
 #define PORT_NUMBER "8080"
@@ -24,10 +25,15 @@ int main(int argc, char *argv[])
     char address[100];
     struct clients_list clients;
     struct client_info *tmpClient;
+    struct http_request incomingRequest;
     clients.head = NULL;
     clients.tail = NULL;
 
     const char *content_type = get_content_type(argv[1]);
+
+    receiveRequest(&incomingRequest, argv[2]);
+
+    printf("%s%d\n", "Request type: ", incomingRequest.requestType);
 
     printf("%s", content_type);
     printf("\n");
@@ -38,7 +44,6 @@ int main(int argc, char *argv[])
     add_client_to_list(socket_listen, &clients);
     printf("%s%d", "Head1: ", clients.head->client.socket);
 
-    printf("%s\n", get_client_address(&clients.head->client, address));
     add_client_to_list(socket_listen + 1, &clients);
     printf("%s%d\n", "Head2: ", clients.head->client.socket);
     add_client_to_list(socket_listen + 2, &clients);
@@ -56,7 +61,6 @@ int main(int argc, char *argv[])
 
     printf("%s", "Lista klientow: ");
     print_clients_list(&clients);
-    tmpClient = get_client(socket_listen, &clients);
 
     printf("%s", "Lista klientow: ");
     print_clients_list(&clients);
