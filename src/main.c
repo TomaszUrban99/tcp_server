@@ -22,49 +22,133 @@
 
 int main(int argc, char *argv[])
 {
-    char address[100];
     struct clients_list clients;
     struct client_info *tmpClient;
-    struct http_request incomingRequest;
+
     clients.head = NULL;
     clients.tail = NULL;
 
-    const char *content_type = get_content_type(argv[1]);
+    /*
+        Structure that specifies criteria
+        for selecting the socket address
+    */
+    struct sockaddr_in hints;
 
-    receiveRequest(&incomingRequest, argv[2]);
+    /* Set field values to 0 */
+    memset(&hints, 0, sizeof(hints));
 
-    printf("%s%d\n", "Request type: ", incomingRequest.requestType);
+    /* Specify criteria for selecting socket address */
+    hints.sin_family = AF_INET;
+    hints.sin_port = htons(8080);
+    inet_aton("192.168.50.184", &hints.sin_addr);
 
-    printf("%s", content_type);
-    printf("\n");
+    /*
+        Get a socket descriptor
+        int domain- AF_INET, ipv4 protocol
+        SOCK_STREAM- TCP Protocol
+        0- protocol is chosen automatically
+    */
+    int socket_descriptor = socket(AF_INET,
+                                   SOCK_STREAM, 0);
 
-    int socket_listen = 0;
-    socket_listen = socket(AF_INET, SOCK_STREAM, 0);
+    if (socket_descriptor < 0)
+    {
+        fprintf(stderr, "Failed to create socket");
+        return -1;
+    }
 
-    add_client_to_list(socket_listen, &clients);
-    printf("%s%d", "Head1: ", clients.head->client.socket);
+    /* bind socket to local address */
+    if (bind(socket_descriptor, (struct sockaddr *)&hints,
+             sizeof(hints)))
+    {
+        fprintf(stderr, "Failed to bind the socket");
+        return -1;
+    };
 
-    add_client_to_list(socket_listen + 1, &clients);
-    printf("%s%d\n", "Head2: ", clients.head->client.socket);
-    add_client_to_list(socket_listen + 2, &clients);
-    printf("%s%d\n", "Head3: ", clients.head->client.socket);
+    /* Listen */
+    printf("Listening...\n");
+    if (listen(socket_descriptor, 10) < 0)
+    {
+        fprintf(stderr, "Failed to listen");
+        return -1;
+    }
 
-    /*get_client(socket_listen, &clients);*/
+    fd_set master;
+    FD_ZERO(&master);
+    FD_SET(socket_descriptor, &master);
+    int max_socket = socket_descriptor;
 
-    print_clients_list(&clients);
+    while (1)
+    {
+        /*
+            Remember to make a copy of master!
+            Select modifies the structure the
+            given fd_set structure!
+        */
+        fd_set reads;
+        reads = master;
 
-    printf("%d\n", clients.head->client.socket);
+        if (select(max_socket + 1, &reads, 0, 0, 0) < 0)
+        {
+            fprintf(stderr, "Select failed");
+            return -1;
+        }
 
-    drop_client(4, &clients);
+        int socket_number;
 
-    add_client_to_list(socket_listen + 3, &clients);
+        for (socket_number = 1; socket_number <= max_socket; ++socket_number)
+        {
+            if (FD_ISSET(socket_number, &reads))
+            {
+                /*
+                    If socket descriptor equals socket number,
+                    the new client is ready to establish a connection
+                */
+                if (socket_descriptor == socket_number)
+                {
+                    struct sockaddr_storage client_address;
+                    socklen_t address_length = sizeof(client_address);
+                    int socket_client = accept(socket_descriptor,
+                                               (struct sockaddr *)&client_address,
+                                               &address_length);
 
-    printf("%s", "Lista klientow: ");
-    print_clients_list(&clients);
+                    if (socket_client < 1)
+                    {
+                        fprintf(stderr, "Failed to create socket\n");
+                        return -1;
+                    }
 
-    printf("%s", "Lista klientow: ");
-    print_clients_list(&clients);
-    free_clients(&clients);
+                    FD_SET(socket_client, &master);
+                    if (socket_client > max_socket)
+                        max_socket = socket_client;
 
+                    char address_buffer[50];
+
+                    getnameinfo((struct sockaddr *)&client_address,
+                                address_length, address_buffer, sizeof(address_buffer),
+                                0, 0, 0);
+
+                    printf("%s%s\n", "New connection from: ", address_buffer);
+                }
+                else
+                {
+                    char read[1024];
+                    int received_bytes = recv(socket_number, read, sizeof(read), 0);
+                    printf("%s%s\n", "Received message: ", read);
+
+                    struct http_request newHttp;
+
+                    receiveRequest(&newHttp, read);
+
+                    printf("%s%d\n", "Request type: ", newHttp.requestType);
+                    printf("%s%s\n", "Path requested: ", newHttp.requestedPath);
+
+                    /*
+                        Handle the request
+                    */
+                }
+            }
+        }
+    }
     return 0;
 }

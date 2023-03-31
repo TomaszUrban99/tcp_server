@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 /* Enumeration type for different types of requests */
 enum requestTypes
@@ -16,11 +17,10 @@ struct http_request
 {
     enum requestTypes requestType;
     char *requestedPath;
-    double httpVersion;
 };
 
 struct http_request *receiveRequest(struct http_request *newRequest,
                                     char *incomingRequest);
 
-char *receiveRequestPath(char *incomingRequest);
+char *receiveRequestPath(char *incomingRequest, char *path);
 #endif

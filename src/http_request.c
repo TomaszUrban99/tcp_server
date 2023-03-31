@@ -4,25 +4,39 @@ struct http_request *receiveRequest(struct http_request *newRequest,
                                     char *incomingRequest)
 {
     char *tmpChar = incomingRequest;
+    char *path;
 
     /* Get the type of http request */
     if (strstr(incomingRequest, "GET") != NULL)
         newRequest->requestType = GET;
-
-    if (strstr(incomingRequest, "POST") != NULL)
-        newRequest->requestType = POST;
     else
     {
-        fprintf(stderr, "%s", "HTTP request has not been recognized\n");
+        if (strstr(incomingRequest, "POST") != NULL)
+            newRequest->requestType = POST;
+        else
+        {
+            fprintf(stderr, "%s", "HTTP request has not been recognized\n");
+            return NULL;
+        }
+    }
+
+    path = receiveRequestPath(tmpChar, path);
+
+    if (path == NULL)
+    {
+        fprintf(stderr, "%s", "Path has not been recognized\n");
+        free(path);
         return NULL;
     }
 
-    printf("%s%s\n", "PATH: ", receiveRequestPath(tmpChar));
+    newRequest->requestedPath = path;
+
+    printf("%s%s\n", "Path: ", newRequest->requestedPath);
 
     return newRequest;
 }
 
-char *receiveRequestPath(char *incomingRequest)
+char *receiveRequestPath(char *incomingRequest, char *path)
 {
     int size = 0;
     char *tmpChar = strstr(incomingRequest, "/");
@@ -33,13 +47,16 @@ char *receiveRequestPath(char *incomingRequest)
         return NULL;
     }
 
-    incomingRequest = tmpChar;
-
-    while (*incomingRequest != ' ')
+    while (*tmpChar != ' ')
     {
-        incomingRequest++;
+        tmpChar++;
         size++;
     }
 
-    return strncpy(incomingRequest - size, tmpChar, size);
+    tmpChar = tmpChar - size;
+    path = (char *)calloc(size + 1, sizeof(char));
+    memcpy(path, tmpChar, size);
+
+    printf("%s\n", path);
+    return path;
 }
