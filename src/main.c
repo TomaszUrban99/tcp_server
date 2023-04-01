@@ -16,6 +16,7 @@
 #include "socket_tool.h"
 #include "client_tool.h"
 #include "http_request.h"
+#include "file_tool.h"
 
 #define IP_LENGTH 50
 #define PORT_NUMBER "8080"
@@ -140,8 +141,32 @@ int main(int argc, char *argv[])
 
                     receiveRequest(&newHttp, read);
 
-                    printf("%s%d\n", "Request type: ", newHttp.requestType);
-                    printf("%s%s\n", "Path requested: ", newHttp.requestedPath);
+                    char *response = "HTTP/1.1 200 OK\r\nContent-Length: 4\r\nContent-Type: text/plain\r\nConnection: close\r\n\r\nTusk";
+                    char *beginning = ".";
+                    /*"~/Kursy/HandsOn/TCPServerProject/build"*/;
+                    int bytes_to_send = strlen(response);
+                    int sent_bytes = 0;
+
+                    char *wholePath = (char *)calloc(strlen(beginning) + strlen(newHttp.requestedPath), sizeof(char));
+                    strcat(wholePath, beginning);
+                    strcat(wholePath, newHttp.requestedPath);
+
+                    printf("%s%s\n", "The path: ", wholePath);
+
+                    printf("%s%ld%s%ld%s%ld\n", "The length of path: ", strlen(wholePath), " ", strlen(beginning), " ", strlen(newHttp.requestedPath));
+                    newHttp.requestedPath = wholePath;
+                    printf("%s%ld\n", "The size of the file: ", getFileSize(wholePath));
+
+                    while (sent_bytes < bytes_to_send)
+                    {
+                        sent_bytes = sent_bytes + send(socket_number, response, bytes_to_send - sent_bytes, 0);
+                    }
+
+                    free(wholePath);
+
+                    printf("%s%d\n", "Bytes sent: ", sent_bytes);
+
+                    close(socket_number);
 
                     /*
                         Handle the request
