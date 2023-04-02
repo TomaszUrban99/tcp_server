@@ -41,7 +41,7 @@ int main(int argc, char *argv[])
     /* Specify criteria for selecting socket address */
     hints.sin_family = AF_INET;
     hints.sin_port = htons(8080);
-    inet_aton("192.168.50.184", &hints.sin_addr);
+    inet_aton("192.168.1.15", &hints.sin_addr);
 
     /*
         Get a socket descriptor
@@ -138,36 +138,42 @@ int main(int argc, char *argv[])
                     printf("%s%s\n", "Received message: ", read);
 
                     struct http_request newHttp;
+                    struct wifi_credentials wifi;
 
                     receiveRequest(&newHttp, read);
+                    getWifiCredentials(&wifi, read);
 
-                    char *response = "HTTP/1.1 200 OK\r\nContent-Length: 4\r\nContent-Type: text/plain\r\nConnection: close\r\n\r\nTusk";
-                    char *beginning = ".";
                     /*"~/Kursy/HandsOn/TCPServerProject/build"*/;
-                    int bytes_to_send = strlen(response);
+
                     int sent_bytes = 0;
 
-                    char *wholePath = (char *)calloc(strlen(beginning) + strlen(newHttp.requestedPath), sizeof(char));
-                    strcat(wholePath, beginning);
-                    strcat(wholePath, newHttp.requestedPath);
+                    createHTTPResopnse(&newHttp, "./http_response.html");
 
-                    printf("%s%s\n", "The path: ", wholePath);
+                    int bytes_to_send = getFileSize("./http_response.html");
 
-                    printf("%s%ld%s%ld%s%ld\n", "The length of path: ", strlen(wholePath), " ", strlen(beginning), " ", strlen(newHttp.requestedPath));
-                    newHttp.requestedPath = wholePath;
-                    printf("%s%ld\n", "The size of the file: ", getFileSize(wholePath));
+                    char *read2 = (char *)calloc(bytes_to_send, sizeof(char));
+                    FILE *openStream = fopen("./http_response.html", "r");
+
+                    int i = 0;
+                    char c = getc(openStream);
+
+                    while (c != EOF)
+                    {
+                        read2[i] = c;
+                        i++;
+                        c = getc(openStream);
+                    }
 
                     while (sent_bytes < bytes_to_send)
                     {
-                        sent_bytes = sent_bytes + send(socket_number, response, bytes_to_send - sent_bytes, 0);
+                        int sentones = send(socket_number, read2 + sent_bytes, bytes_to_send - sent_bytes, 0);
+                        sent_bytes = sent_bytes + sentones;
                     }
 
-                    free(wholePath);
+                    free(newHttp.requestedPath);
+                    free(read2);
 
                     printf("%s%d\n", "Bytes sent: ", sent_bytes);
-
-                    close(socket_number);
-
                     /*
                         Handle the request
                     */

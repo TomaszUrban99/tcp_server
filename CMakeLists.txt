@@ -18,7 +18,7 @@ set(HEADER_FILES_SOCKET inc/socket_tool.h)
 add_library(socket_tool src/socket_tool.c ${HEADER_FILES_SOCKET})
 target_include_directories(socket_tool PRIVATE inc/)
 
-set(HEADER_FILES_HTTP inc/http_request.h)
+set(HEADER_FILES_HTTP inc/http_request.h inc/file_tool.h)
 add_library(http_request src/http_request.c ${HEADER_FILES_HTTP})
 target_include_directories(http_request PRIVATE inc/)
 

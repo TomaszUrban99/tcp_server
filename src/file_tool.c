@@ -5,25 +5,11 @@ long getFileSize(char *filename)
 {
     FILE *filePtr = fopen(filename, "r");
 
-    FILE *filePtr2 = fopen("plik1.txt", "r");
-    if (filePtr2 == NULL)
-    {
-        printf("%s\n", "Tuuuuuuuuuuuuuuuuusk");
-    }
-    FILE *filePtr3 = fopen("plik2.html", "r");
-    if (filePtr3 == NULL)
-    {
-        printf("%s\n", "Taaaaaaaaaaaaaaaask");
-    }
-
-    printf("%s%s\n", "File to determ: ", filename);
-
     /* If open failed return -1 */
     if (filePtr == NULL)
     {
         fprintf(stderr, "Value of error: %d\n", errno);
         perror("Error printed by error");
-        printf("%s\n", "Tusk, tusk, tusk");
         return -1;
     }
 
