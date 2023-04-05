@@ -18,17 +18,18 @@
 #include "http_request.h"
 #include "file_tool.h"
 
-#define IP_LENGTH 50
 #define PORT_NUMBER "8080"
 
 int main(int argc, char *argv[])
 {
     struct clients_list clients;
-    struct client_info *tmpClient;
 
     clients.head = NULL;
     clients.tail = NULL;
 
+    struct configuration newConfiguration;
+
+    getConfiguration(&newConfiguration, "./configuration_file.txt");
     /*
         Structure that specifies criteria
         for selecting the socket address
@@ -138,45 +139,33 @@ int main(int argc, char *argv[])
                     printf("%s%s\n", "Received message: ", read);
 
                     struct http_request newHttp;
-                    struct wifi_credentials wifi;
 
                     receiveRequest(&newHttp, read);
-                    getWifiCredentials(&wifi, read);
-
-                    /*"~/Kursy/HandsOn/TCPServerProject/build"*/;
+                    if (newHttp.requestedPath == "./wifi_credentials.html")
+                    {
+                        struct wifi_credentials wifi;
+                        getWifiCredentials(&wifi, read);
+                    }
 
                     int sent_bytes = 0;
 
                     createHTTPResopnse(&newHttp, "./http_response.html");
+                    char *responseArray = (char *)calloc(getFileSize("./http_response.html"), sizeof(char));
 
-                    int bytes_to_send = getFileSize("./http_response.html");
-
-                    char *read2 = (char *)calloc(bytes_to_send, sizeof(char));
-                    FILE *openStream = fopen("./http_response.html", "r");
-
-                    int i = 0;
-                    char c = getc(openStream);
-
-                    while (c != EOF)
-                    {
-                        read2[i] = c;
-                        i++;
-                        c = getc(openStream);
-                    }
+                    int bytes_to_send = responseToArray(&newHttp, "./http_response.html", responseArray);
 
                     while (sent_bytes < bytes_to_send)
                     {
-                        int sentones = send(socket_number, read2 + sent_bytes, bytes_to_send - sent_bytes, 0);
+                        int sentones = send(socket_number, responseArray + sent_bytes, bytes_to_send - sent_bytes, 0);
+                        if (sentones < 0)
+                        {
+                            fprintf(stderr, "%s\n", "Failed to send()");
+                        }
                         sent_bytes = sent_bytes + sentones;
                     }
 
                     free(newHttp.requestedPath);
-                    free(read2);
-
-                    printf("%s%d\n", "Bytes sent: ", sent_bytes);
-                    /*
-                        Handle the request
-                    */
+                    free(responseArray);
                 }
             }
         }

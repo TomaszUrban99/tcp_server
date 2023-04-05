@@ -45,10 +45,10 @@ void createHTTPResopnse(struct http_request *newRequest, char *httpResponse)
         fputs("HTTP/1.1 200 OK\n", filePointer);
     }
 
-    int sizeOfFile = getFileSize(newRequest->requestedPath);
+    newRequest->responseFileSize = getFileSize(newRequest->requestedPath);
 
     fputs("Content-Length: ", filePointer);
-    fprintf(filePointer, "%d\n", sizeOfFile);
+    fprintf(filePointer, "%d\n", newRequest->responseFileSize);
     fputs("Content-Type: text/html\r\n", filePointer);
     fputs("Connection: keep-alive\r\n\r\n", filePointer);
 
@@ -63,6 +63,35 @@ void createHTTPResopnse(struct http_request *newRequest, char *httpResponse)
 
     fclose(filePointer);
     fclose(content);
+}
+
+int responseToArray(struct http_request *newRequest,
+                    char *httpResponseFilename, char *sendResponse)
+{
+    int responseFileSize = getFileSize(httpResponseFilename);
+
+    FILE *filePtr = fopen(httpResponseFilename, "r");
+
+    if (filePtr == NULL)
+    {
+        fprintf(stderr, "%s\n", "Failed to open response file");
+        perror("Failed to open file");
+    }
+    /* Allocate memory for array with answers */
+
+    if (sendResponse == NULL)
+        printf("%s\n", "Tusk");
+
+    int i = 0;
+    char c = fgetc(filePtr);
+    while (c != EOF)
+    {
+        sendResponse[i] = c;
+        c = fgetc(filePtr);
+        i++;
+    }
+
+    return strlen(sendResponse);
 }
 
 char *receiveRequestPath(char *incomingRequest, char *path)

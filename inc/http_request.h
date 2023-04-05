@@ -24,6 +24,7 @@ struct http_request
 {
     enum requestTypes requestType;
     char *requestedPath;
+    int responseFileSize;
 };
 
 struct wifi_credentials
@@ -36,6 +37,9 @@ struct http_request *receiveRequest(struct http_request *newRequest,
                                     char *incomingRequest);
 
 void createHTTPResopnse(struct http_request *newRequest, char *httpResponse);
+
+int responseToArray(struct http_request *newRequest,
+                    char *httpResponseFilename, char *sendResponse);
 
 char *receiveRequestPath(char *incomingRequest, char *path);
 
