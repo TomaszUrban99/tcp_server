@@ -145,8 +145,6 @@ void getWifiCredentials(struct wifi_credentials *wifi, char *incomingRequests)
         {
             wifi->ssid = (char *)calloc(size + 1, sizeof(char));
             memcpy(wifi->ssid, tmpChar, size);
-
-            printf("%s%s\n", "SSID: ", wifi->ssid);
         }
 
         tmpChar = strstr(tmpChar, PASSWORD);
@@ -169,9 +167,35 @@ void getWifiCredentials(struct wifi_credentials *wifi, char *incomingRequests)
             {
                 wifi->password = (char *)calloc(size + 1, sizeof(char));
                 memcpy(wifi->password, tmpChar, size);
-
-                printf("%s%s\n", "Password: ", wifi->password);
             }
+
+            printf("%s%s\n", "Password: ", wifi->password);
         }
     }
+}
+
+int safeWifiCredentials(struct wifi_credentials *wifi, char *filenameWifi)
+{
+    /* Open stream to wifi_credentials file */
+    FILE *filePtr = fopen(filenameWifi, "w");
+
+    /* Check whether stream has been opened correctly */
+    if (filePtr == NULL)
+    {
+        fprintf(stderr, "%s\n", "Failed to open wifi credentials file");
+        return -1;
+    }
+
+    printf("%s\n", wifi->ssid);
+
+    fprintf(filePtr, "%s\n", wifi->ssid);
+    fprintf(filePtr, "%s\n", wifi->password);
+
+    free(wifi->ssid);
+    free(wifi->password);
+
+    /* Close the stream */
+    fclose(filePtr);
+
+    return 0;
 }

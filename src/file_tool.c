@@ -42,7 +42,7 @@ int getConfiguration(struct configuration *configServer,
     }
 
     char readLine[128];
-    char ip_adress[28];
+    char tmpArray[28];
 
     while (fgets(readLine, sizeof(readLine), filePtr) != NULL)
     {
@@ -54,70 +54,74 @@ int getConfiguration(struct configuration *configServer,
             tmpPtr = strstr(readLine, "\"");
             tmpPtr = tmpPtr + 1;
 
-            while (tmpPtr[i] != '\"')
+            while (*(tmpPtr + i) != '\"')
             {
-                ip_adress[i] = *(tmpPtr + i);
                 i++;
             }
 
             configServer->ip_address = (char *)calloc(i, sizeof(char));
-            memcpy(configServer->ip_address, ip_adress, i);
+            memcpy(configServer->ip_address, tmpPtr, i);
 
             printf("%s\n", configServer->ip_address);
-            free(configServer->ip_address);
             break;
+
         case '2':
             tmpPtr = strstr(readLine, "\"");
             tmpPtr = tmpPtr + 1;
 
-            while (tmpPtr[i] != '\"')
+            while (*(tmpPtr + i) != '\"')
             {
-                ip_adress[i] = *(tmpPtr + i);
                 i++;
             }
 
-            configServer->ip_address = (char *)calloc(i, sizeof(char));
-            memcpy(configServer->ip_address, ip_adress, i);
+            char *PortNumberArray = (char *)calloc(i, sizeof(char));
+            memcpy(PortNumberArray, tmpPtr, i);
 
-            printf("%s\n", configServer->ip_address);
-            free(configServer->ip_address);
+            sscanf(PortNumberArray, "%d", &configServer->port_number);
+            printf("%s%d\n", "Numer portu: ", configServer->port_number);
+
+            free(PortNumberArray);
+
             break;
 
         case '3':
             tmpPtr = strstr(readLine, "\"");
             tmpPtr = tmpPtr + 1;
 
-            while (tmpPtr[i] != '\"')
+            while (*(tmpPtr + i) != '\"')
             {
-                ip_adress[i] = *(tmpPtr + i);
                 i++;
             }
 
-            configServer->ip_address = (char *)calloc(i, sizeof(char));
-            memcpy(configServer->ip_address, ip_adress, i);
+            configServer->wifi_credentials = (char *)calloc(i, sizeof(char));
+            memcpy(configServer->wifi_credentials, tmpPtr, i);
 
-            printf("%s\n", configServer->ip_address);
-            free(configServer->ip_address);
+            printf("%s\n", configServer->wifi_credentials);
             break;
 
         case '4':
             tmpPtr = strstr(readLine, "\"");
             tmpPtr = tmpPtr + 1;
 
-            while (tmpPtr[i] != '\"')
+            while (*(tmpPtr + i) != '\"')
             {
-                ip_adress[i] = *(tmpPtr + i);
                 i++;
             }
 
-            configServer->ip_address = (char *)calloc(i, sizeof(char));
-            memcpy(configServer->ip_address, ip_adress, i);
+            configServer->http_response = (char *)calloc(i, sizeof(char));
+            memcpy(configServer->http_response, tmpPtr, i);
 
-            printf("%s\n", configServer->ip_address);
-            free(configServer->ip_address);
+            printf("%s\n", configServer->http_response);
             break;
         }
     }
 
     return 0;
+}
+
+void freeConfiguration(struct configuration *configServer)
+{
+    free(configServer->ip_address);
+    free(configServer->wifi_credentials);
+    free(configServer->http_response);
 }

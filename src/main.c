@@ -18,7 +18,8 @@
 #include "http_request.h"
 #include "file_tool.h"
 
-#define PORT_NUMBER "8080"
+#define CONFIGURATION_FILE "./configuration_file.txt"
+#define WIFI_CREDENTIALS_FILE "./wifi_credentials.txt"
 
 int main(int argc, char *argv[])
 {
@@ -27,9 +28,21 @@ int main(int argc, char *argv[])
     clients.head = NULL;
     clients.tail = NULL;
 
+    /* Read web server configuration */
     struct configuration newConfiguration;
+    getConfiguration(&newConfiguration, CONFIGURATION_FILE);
 
-    getConfiguration(&newConfiguration, "./configuration_file.txt");
+    /* Copy strings with configuration. (Trying to avoid memory leakage)*/
+    char ipAdress[25];
+    strcpy(ipAdress, newConfiguration.ip_address);
+    char wifiCredentials[25];
+    strcpy(wifiCredentials, newConfiguration.wifi_credentials);
+    char httpResponse[25];
+    strcpy(httpResponse, newConfiguration.http_response);
+
+    /* Free memory allocated by reading the configuration file */
+    freeConfiguration(&newConfiguration);
+
     /*
         Structure that specifies criteria
         for selecting the socket address
@@ -41,8 +54,8 @@ int main(int argc, char *argv[])
 
     /* Specify criteria for selecting socket address */
     hints.sin_family = AF_INET;
-    hints.sin_port = htons(8080);
-    inet_aton("192.168.1.15", &hints.sin_addr);
+    hints.sin_port = htons(newConfiguration.port_number);
+    inet_aton(ipAdress, &hints.sin_addr);
 
     /*
         Get a socket descriptor
@@ -134,36 +147,50 @@ int main(int argc, char *argv[])
                 }
                 else
                 {
+                    /* Read message incoming to web server */
                     char read[1024];
                     int received_bytes = recv(socket_number, read, sizeof(read), 0);
                     printf("%s%s\n", "Received message: ", read);
 
                     struct http_request newHttp;
-
                     receiveRequest(&newHttp, read);
-                    if (newHttp.requestedPath == "./wifi_credentials.html")
+                    if (!strcmp(newHttp.requestedPath, wifiCredentials))
                     {
                         struct wifi_credentials wifi;
                         getWifiCredentials(&wifi, read);
+                        safeWifiCredentials(&wifi, WIFI_CREDENTIALS_FILE);
                     }
 
+                    /* Create HTTP Response */
+                    createHTTPResopnse(&newHttp, httpResponse);
+                    /* Allocate memory for array to store response */
+                    char *responseArray = (char *)calloc(getFileSize(httpResponse), sizeof(char));
+                    /*
+                        Put HTTP response to sent to an array.
+                        Variable int bytes_to_send- stores the size of file with
+                        HTTP response.
+                    */
+                    int bytes_to_send = responseToArray(&newHttp, httpResponse, responseArray);
+                    /* int sent_bytes- variable for storing number of sent bytes */
                     int sent_bytes = 0;
 
-                    createHTTPResopnse(&newHttp, "./http_response.html");
-                    char *responseArray = (char *)calloc(getFileSize("./http_response.html"), sizeof(char));
-
-                    int bytes_to_send = responseToArray(&newHttp, "./http_response.html", responseArray);
-
+                    /*
+                        Repeat the loop until the number of sent bytes is equal
+                        to the number of bytes that should be sent.
+                    */
                     while (sent_bytes < bytes_to_send)
                     {
                         int sentones = send(socket_number, responseArray + sent_bytes, bytes_to_send - sent_bytes, 0);
+                        /* If sentones is lower than print an error */
                         if (sentones < 0)
                         {
                             fprintf(stderr, "%s\n", "Failed to send()");
                         }
+                        /* Add number of recently sent bytes to the total number of sent bytes */
                         sent_bytes = sent_bytes + sentones;
                     }
 
+                    /* Free allocated memory. Avoiding memory leakage. */
                     free(newHttp.requestedPath);
                     free(responseArray);
                 }

@@ -45,4 +45,6 @@ char *receiveRequestPath(char *incomingRequest, char *path);
 
 void getWifiCredentials(struct wifi_credentials *wifi, char *incomingResponse);
 
+int safeWifiCredentials(struct wifi_credentials *wifi, char *filenameWifi);
+
 #endif

@@ -13,7 +13,7 @@
 struct configuration
 {
     char *ip_address;
-    char *port_number;
+    int port_number;
     char *wifi_credentials;
     char *http_response;
 };
@@ -30,5 +30,7 @@ long getFileSize(char *filename);
 
 int getConfiguration(struct configuration *configServer,
                      char *filename);
+
+void freeConfiguration(struct configuration *configServer);
 
 #endif
